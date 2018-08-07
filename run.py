@@ -2,21 +2,20 @@
 import sys
 import time
 
-from xml.dom import minidom
 from aiohttp import ClientSession
 import asyncio
 
 #Config
-CHANNEL = input("Channel name: ")
+CHANNEL = input("Last.FM name: ")
 WAIT_TIME = 10
 SONG_FILE = "currentSong.txt"
 
 #Global stuff
 API_KEY = "460cda35be2fbf4f28e8ea7a38580730"
-ENDPOINT = f'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&nowplaying=true&user={CHANNEL}&api_key={API_KEY}'
+ENDPOINT = f'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&format=json&limit=1&user={CHANNEL}&api_key={API_KEY}'
 
 class SongHandler:
-	
+
     def __init__(self):
         self.session = ClientSession()
 
@@ -27,19 +26,24 @@ class SongHandler:
 
     async def request(self, method, endpoint):
         async with self.session.request(method, endpoint) as response:
-            text = await response.text()
-            return text
+            try:
+                return await response.json()
+            except json.decoder.JSONDecodeError:
+                return {}
+            else:
+                return {}
 
     async def check_for_song(self):
         result = await self.request("GET", ENDPOINT)
-        parsed = minidom.parseString(result)
-        artist = parsed.getElementsByTagName("artist")
-        name = parsed.getElementsByTagName("name")
 
-        return {
-            "name": name[0].firstChild.nodeValue,
-            "artist": artist[0].firstChild.nodeValue
-        }
+        if result and result["recenttracks"] and result["recenttracks"]["track"] and result["recenttracks"]["track"][0]:
+            track = result["recenttracks"]["track"][0]
+
+            if track["artist"] and track["artist"]["#text"] and track["name"]:
+                artist = track["artist"]["#text"]
+                name = track["name"]
+
+                return {"artist": artist, "name": name.replace(" ()", "")}
 
     async def run(self):
         running = True
@@ -62,7 +66,7 @@ class SongHandler:
             print("Closing...")
 
 async def run():
-    await SongHandler().run()    
+    await SongHandler().run()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(run())
