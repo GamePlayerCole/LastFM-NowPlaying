@@ -12,7 +12,7 @@ SONG_FILE = "currentSong.txt"
 
 #Global stuff
 API_KEY = "460cda35be2fbf4f28e8ea7a38580730"
-ENDPOINT = f'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&format=json&limit=1&nowplaying=true&user={CHANNEL}&api_key={API_KEY}'
+ENDPOINT = f'http://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&format=json&limit=1&user={CHANNEL}&api_key={API_KEY}'
 
 class SongHandler:
 
